@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Cantinho da Vovó Marmitas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cor-principal: #7A8B4F;
+    --cor-fundo: #22201A;
+    --cor-texto: #F5F0E6;
+    --cor-texto-suave: #ACA495;
+    --cor-cartao: #2C2A22;
+    --cor-borda: #3E3B30;
+    --radius: 16px;
+  }
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; height:100%;}
+  body{
+    font-family:'Inter', sans-serif;
+    background:var(--cor-fundo);
+    color:var(--cor-texto);
+    overscroll-behavior-y:none;
+    padding-bottom: 92px;
+    -webkit-font-smoothing:antialiased;
+  }
+  input, select, textarea, button{ font-size:16px; }
+  h1,h2,h3{ font-family:'Fraunces', serif; margin:0; }
+
+  .header{ padding:28px 20px 16px; display:flex; align-items:center; gap:14px; border-bottom:1px solid var(--cor-borda); }
+  .header img{ width:56px; height:56px; border-radius:14px; object-fit:cover; border:1px solid var(--cor-borda); }
+  .header .info h1{ font-size:22px; font-weight:700; line-height:1.1; }
+  .header .info p{ margin:4px 0 0; font-size:13px; color:var(--cor-texto-suave); }
+  .status-pill{ display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; margin-top:6px; padding:3px 10px; border-radius:20px; }
+  .status-pill.aberto{ background:rgba(122,139,79,.2); color:#A6BC7C; }
+  .status-pill.fechado{ background:rgba(200,80,80,.15); color:#E08484; }
+  .status-pill .dot{ width:6px; height:6px; border-radius:50%; background:currentColor; }
+
+  .aviso-corte{
+    margin:14px 20px 0; padding:10px 14px;
+    background:rgba(230,180,80,.12); border:1px solid rgba(230,180,80,.35);
+    color:#E6C36A; border-radius:12px; font-size:12.5px; font-weight:600;
+    display:flex; align-items:center; gap:8px;
+  }
+  .aviso-corte.oculto{ display:none; }
+
+  .dias-wrap{ position:sticky; top:0; z-index:20; background:var(--cor-fundo); border-bottom:1px solid var(--cor-borda); padding:14px 0; margin-top:14px; }
+  .dias{ display:flex; gap:8px; overflow-x:auto; padding:0 20px; scrollbar-width:none; }
+  .dias::-webkit-scrollbar{ display:none; }
+  .dia-chip{ flex:0 0 auto; min-width:64px; padding:10px 8px; border-radius:14px; background:var(--cor-cartao); border:1px solid var(--cor-borda); color:var(--cor-texto-suave); text-align:center; cursor:pointer; transition:.15s ease; }
+  .dia-chip .nome-dia{ font-size:11px; font-weight:700; text-transform:uppercase; display:block; }
+  .dia-chip .marca-hoje{ font-size:9px; font-weight:700; color:var(--cor-principal); display:block; margin-top:2px; }
+  .dia-chip.ativo{ background:var(--cor-principal); border-color:var(--cor-principal); color:#1A1D12; }
+  .dia-chip.ativo .marca-hoje{ color:#1A1D12; }
+  .dia-chip.fechado-dia{ opacity:.4; }
+
+  .prato-container{ padding:22px 20px 4px; }
+  .prato-card{ background:var(--cor-cartao); border:1px solid var(--cor-borda); border-radius:20px; overflow:hidden; }
+  .prato-card img{ width:100%; height:170px; object-fit:cover; display:block; background:var(--cor-borda); }
+  .prato-corpo{ padding:18px; }
+  .prato-corpo h2{ font-size:19px; margin-bottom:6px; }
+  .prato-obs{ font-size:13px; color:var(--cor-texto-suave); line-height:1.5; margin-bottom:16px; }
+  .indisponivel-dia{ text-align:center; padding:40px 20px; color:var(--cor-texto-suave); font-size:14px; }
+
+  .tamanhos-titulo{ font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--cor-texto-suave); margin-bottom:8px; }
+  .tamanhos-grupo{ display:flex; gap:8px; margin-bottom:18px; }
+  .tamanho-btn{ flex:1; padding:12px 6px; border-radius:12px; background:var(--cor-fundo); border:1px solid var(--cor-borda); color:var(--cor-texto); text-align:center; cursor:pointer; }
+  .tamanho-btn .letra{ font-weight:700; font-size:15px; display:block; }
+  .tamanho-btn .preco-tam{ font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--cor-texto-suave); display:block; margin-top:2px; }
+  .tamanho-btn.ativo{ background:var(--cor-principal); border-color:var(--cor-principal); }
+  .tamanho-btn.ativo .letra, .tamanho-btn.ativo .preco-tam{ color:#1A1D12; }
+
+  .qtd-linha{ display:flex; align-items:center; justify-content:space-between; }
+  .stepper{ display:flex; align-items:center; background:var(--cor-fundo); border:1px solid var(--cor-borda); border-radius:10px; overflow:hidden; }
+  .stepper button{ width:38px; height:38px; border:none; background:transparent; color:var(--cor-texto); font-size:19px; font-weight:700; cursor:pointer; }
+  .stepper button:active{ background:var(--cor-borda); }
+  .stepper .qtd{ min-width:30px; text-align:center; font-family:'JetBrains Mono', monospace; font-weight:700; }
+  .add-btn-prato{ padding:0 22px; height:44px; background:var(--cor-principal); color:#1A1D12; border-radius:12px; border:none; font-weight:700; font-size:14px; cursor:pointer; }
+
+  .carrinho-barra{
+    position:fixed; left:0; right:0; bottom:0; z-index:30;
+    background:var(--cor-principal); color:#1A1D12;
+    padding:14px 18px; padding-bottom:calc(14px + env(safe-area-inset-bottom));
+    display:flex; align-items:center; justify-content:space-between;
+    box-shadow:0 -8px 24px rgba(0,0,0,.35);
+    cursor:pointer; transform:translateY(110%); transition:transform .25s ease;
+  }
+  .carrinho-barra.visivel{ transform:translateY(0); }
+  .carrinho-barra .esquerda{ display:flex; align-items:center; gap:10px; }
+  .carrinho-contador{ background:rgba(0,0,0,.2); width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; }
+  .carrinho-barra .label{ font-weight:700; font-size:14.5px; }
+  .carrinho-barra .total{ font-family:'JetBrains Mono', monospace; font-weight:700; font-size:15.5px; }
+
+  .overlay{ position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:40; opacity:0; pointer-events:none; transition:opacity .2s ease; }
+  .overlay.aberto{ opacity:1; pointer-events:auto; }
+  .sheet{
+    position:fixed; left:0; right:0; bottom:0; z-index:50;
+    background:var(--cor-fundo); border-radius:20px 20px 0 0; border-top:1px solid var(--cor-borda);
+    max-height:85vh; overflow-y:auto; transform:translateY(100%); transition:transform .28s cubic-bezier(.32,.72,0,1);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .sheet.aberto{ transform:translateY(0); }
+  .sheet-handle{ width:40px; height:4px; background:var(--cor-borda); border-radius:4px; margin:12px auto 4px; }
+  .sheet-header{ display:flex; align-items:center; justify-content:space-between; padding:12px 20px 6px; }
+  .sheet-header h3{ font-size:18px; }
+  .sheet-header button{ background:none; border:none; color:var(--cor-texto-suave); font-size:14px; cursor:pointer; }
+  .recibo{ margin:10px 20px 0; border-top:1px dashed var(--cor-borda); border-bottom:1px dashed var(--cor-borda); padding:14px 0; }
+  .recibo-item{ display:flex; justify-content:space-between; align-items:flex-start; font-family:'JetBrains Mono', monospace; font-size:13px; margin-bottom:10px; gap:10px; }
+  .recibo-item .qtd-nome{ color:var(--cor-texto); flex:1; }
+  .recibo-item .remover{ background:none; border:none; color:var(--cor-texto-suave); font-size:11px; text-decoration:underline; cursor:pointer; padding:0; margin-top:2px; }
+  .linha-total{ display:flex; justify-content:space-between; font-size:13.5px; color:var(--cor-texto-suave); padding:20px 20px 0; }
+  .linha-total.grande{ font-size:17px; font-weight:700; color:var(--cor-texto); padding-top:8px; }
+  .btn-enviar{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:calc(100% - 40px); margin:18px 20px 20px;
+    background:#25D366; color:#fff; border:none; border-radius:14px;
+    padding:16px; font-size:15.5px; font-weight:700; cursor:pointer;
+  }
+  .btn-enviar svg{ width:20px; height:20px; fill:#fff; }
+
+  .opcoes-pedido{ padding:4px 20px 0; }
+  .opcoes-titulo{ font-size:12.5px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--cor-texto-suave); margin:16px 0 8px; }
+  .opcoes-grupo{ display:flex; gap:8px; }
+  .opcao-btn{ flex:1; padding:11px 10px; border-radius:10px; background:var(--cor-cartao); border:1px solid var(--cor-borda); color:var(--cor-texto-suave); font-size:13.5px; font-weight:600; cursor:pointer; transition:.15s ease; }
+  .opcao-btn.ativa{ background:var(--cor-principal); border-color:var(--cor-principal); color:#1A1D12; }
+  .input-texto{ width:100%; margin-top:10px; padding:12px 14px; border-radius:10px; background:var(--cor-cartao); border:1px solid var(--cor-borda); color:var(--cor-texto); }
+  .input-texto::placeholder{ color:var(--cor-texto-suave); }
+  #campo-endereco.oculto, #campo-troco.oculto{ display:none; }
+  .vazio{ text-align:center; padding:60px 20px; color:var(--cor-texto-suave); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <img id="logo" src="" alt="Logo">
+  <div class="info">
+    <h1 id="nome-loja">Carregando...</h1>
+    <p id="slogan-loja"></p>
+    <span class="status-pill" id="status-loja"><span class="dot"></span><span id="status-texto">--</span></span>
+  </div>
+</div>
+
+<div class="aviso-corte oculto" id="aviso-corte">⏰ <span id="aviso-corte-texto"></span></div>
+
+<div class="dias-wrap">
+  <div class="dias" id="lista-dias"></div>
+</div>
+
+<div class="prato-container" id="prato-container"></div>
+
+<div class="carrinho-barra" id="carrinho-barra">
+  <div class="esquerda">
+    <div class="carrinho-contador" id="carrinho-contador">0</div>
+    <div class="label">Ver pedido</div>
+  </div>
+  <div class="total" id="carrinho-total">R$ 0,00</div>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <h3>Seu pedido</h3>
+    <button id="fechar-sheet">Fechar</button>
+  </div>
+  <div class="recibo" id="recibo-itens"></div>
+
+  <div class="opcoes-pedido">
+    <p class="opcoes-titulo">Seu nome</p>
+    <input type="text" id="input-nome" class="input-texto" placeholder="Como podemos te chamar?" style="margin-top:0;">
+
+    <p class="opcoes-titulo">Como você quer receber?</p>
+    <div class="opcoes-grupo" id="grupo-entrega">
+      <button class="opcao-btn ativa" data-entrega="entrega">Entrega</button>
+      <button class="opcao-btn" data-entrega="retirada">Retirar no local</button>
+    </div>
+    <div id="campo-endereco">
+      <input type="text" id="input-endereco" class="input-texto" placeholder="Endereço completo para entrega">
+    </div>
+
+    <p class="opcoes-titulo">Forma de pagamento</p>
+    <div class="opcoes-grupo" id="grupo-pagamento">
+      <button class="opcao-btn ativa" data-pagamento="Pix">Pix</button>
+      <button class="opcao-btn" data-pagamento="Dinheiro">Dinheiro</button>
+      <button class="opcao-btn" data-pagamento="Cartão">Cartão</button>
+    </div>
+    <div id="campo-troco">
+      <input type="text" id="input-troco" class="input-texto" placeholder="Troco para quanto? (opcional)">
+    </div>
+  </div>
+
+  <div class="linha-total"><span>Subtotal</span><span id="linha-subtotal">R$ 0,00</span></div>
+  <div class="linha-total" id="linha-taxa-wrap"><span>Taxa de entrega</span><span id="linha-taxa">R$ 0,00</span></div>
+  <div class="linha-total grande"><span>Total</span><span id="linha-total-geral">R$ 0,00</span></div>
+  <button class="btn-enviar" id="btn-whatsapp">
+    <svg viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2zm0 18.15h-.01a8.23 8.23 0 0 1-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.26-8.24 2.2 0 4.27.86 5.83 2.42a8.18 8.18 0 0 1 2.41 5.83c0 4.55-3.7 8.24-8.24 8.24z"/></svg>
+    Enviar pedido pelo WhatsApp
+  </button>
+</div>
+
+<script>
+const CONFIG = {
+  SHEET_ID: "COLE_AQUI_O_ID_DA_PLANILHA",
+  GID_PRATOS: "0",
+  GID_LOJA: "SUBSTITUA",
+};
+
+const DIAS_SEMANA = ["Domingo","Segunda","Terca","Quarta","Quinta","Sexta","Sabado"];
+const DIAS_LABEL = {Domingo:"Dom", Segunda:"Seg", Terca:"Ter", Quarta:"Qua", Quinta:"Qui", Sexta:"Sex", Sabado:"Sáb"};
+
+const DADOS_EXEMPLO = {
+  loja: {
+    nome: "Cantinho da Vovó Marmitas",
+    slogan: "Comida caseira de verdade, todo dia",
+    whatsapp: "5524992218775",
+    logo: "",
+    corPrincipal: "#7A8B4F",
+    corFundo: "#22201A",
+    horarioCorte: "10:30",
+    taxaEntrega: 5,
+    rodape: "Obrigada pela preferência! Bom apetite 🍽️",
+    aberturaGeral: "08:00",
+    fechamentoGeral: "15:00",
+  },
+  pratos: {
+    Segunda: {nome:"Fechado", observacao:"Não abrimos às segundas-feiras", disponivel:false, foto:"", tamanhos:[]},
+    Terca: {nome:"Feijoada leve com couve", observacao:"Acompanha arroz branco, feijão, couve refogada e laranja", disponivel:true, foto:"", tamanhos:[{tamanho:"P",preco:16},{tamanho:"M",preco:20},{tamanho:"G",preco:24}]},
+    Quarta: {nome:"Frango grelhado com purê", observacao:"Acompanha arroz, purê de batata e salada verde", disponivel:true, foto:"", tamanhos:[{tamanho:"P",preco:15},{tamanho:"M",preco:19},{tamanho:"G",preco:23}]},
+    Quinta: {nome:"Carne de panela com mandioca", observacao:"Acompanha arroz, feijão e mandioca cozida", disponivel:true, foto:"", tamanhos:[{tamanho:"P",preco:17},{tamanho:"M",preco:21},{tamanho:"G",preco:25}]},
+    Sexta: {nome:"Peixe ensopado", observacao:"Acompanha arroz branco, pirão e salada", disponivel:true, foto:"", tamanhos:[{tamanho:"P",preco:18},{tamanho:"M",preco:22},{tamanho:"G",preco:26}]},
+    Sabado: {nome:"Feijoada completa", observacao:"Acompanha arroz, couve, farofa e laranja", disponivel:true, foto:"", tamanhos:[{tamanho:"P",preco:19},{tamanho:"M",preco:23},{tamanho:"G",preco:27}]},
+    Domingo: {nome:"Fechado", observacao:"Não abrimos aos domingos", disponivel:false, foto:"", tamanhos:[]},
+  }
+};
+
+let LOJA = DADOS_EXEMPLO.loja;
+let PRATOS = DADOS_EXEMPLO.pratos;
+let CARRINHO = {};
+let DIA_SELECIONADO = DIAS_SEMANA[new Date().getDay()];
+let TAMANHO_SELECIONADO = null;
+let TIPO_ENTREGA = "entrega";
+let FORMA_PAGAMENTO = "Pix";
+
+function formatarPreco(v){ return "R$ " + v.toFixed(2).replace(".", ","); }
+
+function placeholderImg(texto, cor){
+  const letra = (texto || "?").trim().charAt(0).toUpperCase();
+  const corFundo = (cor || "#8a8a8a").replace("#","%23");
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><rect width='300' height='300' fill='${cor||"#8a8a8a"}'/><text x='50%' y='54%' font-family='Arial, sans-serif' font-size='130' fill='#ffffff' text-anchor='middle' dominant-baseline='middle'>${letra}</text></svg>`;
+  return "data:image/svg+xml," + encodeURIComponent(svg);
+}
+
+function ehVerdadeiro(v){ return String(v).trim().toLowerCase() === "sim"; }
+
+function parseCSV(texto){
+  const linhas = texto.trim().split("\n").map(l => l.split(",").map(c => c.replace(/^"|"$/g,"").trim()));
+  const headers = linhas[0];
+  return linhas.slice(1).map(linha => {
+    const obj = {};
+    headers.forEach((h,i) => obj[h] = linha[i]);
+    return obj;
+  });
+}
+
+async function buscarPlanilha(gid){
+  const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/export?format=csv&gid=${gid}`;
+  const res = await fetch(url);
+  if(!res.ok) throw new Error("Falha ao buscar planilha");
+  return parseCSV(await res.text());
+}
+
+async function carregarDados(){
+  if(CONFIG.SHEET_ID === "COLE_AQUI_O_ID_DA_PLANILHA") return;
+  try{
+    const [linhasPratos, linhasLoja] = await Promise.all([
+      buscarPlanilha(CONFIG.GID_PRATOS),
+      buscarPlanilha(CONFIG.GID_LOJA),
+    ]);
+
+    const mapaLoja = {};
+    linhasLoja.forEach(l => mapaLoja[l["Campo"]] = l["Valor"]);
+    LOJA = {
+      nome: mapaLoja["Nome da loja"],
+      slogan: mapaLoja["Slogan / descricao curta"] || mapaLoja["Slogan / descrição curta"],
+      whatsapp: mapaLoja["WhatsApp (com DDI e DDD, so numeros)"] || mapaLoja["WhatsApp (com DDI e DDD, só números)"],
+      logo: mapaLoja["Logo (URL)"],
+      corPrincipal: mapaLoja["Cor principal (hex)"],
+      corFundo: mapaLoja["Cor secundaria (hex)"] || mapaLoja["Cor secundária (hex)"],
+      horarioCorte: mapaLoja["Horario limite do pedido"] || mapaLoja["Horário limite do pedido"],
+      taxaEntrega: parseFloat(mapaLoja["Taxa de entrega (R$)"] || "0"),
+      rodape: mapaLoja["Mensagem de rodape do pedido"] || mapaLoja["Mensagem de rodapé do pedido"],
+      aberturaGeral: mapaLoja["Abertura geral"] || "08:00",
+      fechamentoGeral: mapaLoja["Fechamento geral"] || "15:00",
+    };
+
+    const novoPratos = {};
+    linhasPratos.forEach(p => {
+      const dia = p["Dia da semana"];
+      if(!novoPratos[dia]) novoPratos[dia] = { nome: p["Nome"], observacao: p["Observacao"] || p["Observação"], disponivel: ehVerdadeiro(p["Disponivel (sim/nao)"] || p["Disponível (sim/não)"]), foto: p["Foto (URL)"], tamanhos: [] };
+      novoPratos[dia].tamanhos.push({ tamanho: p["Tamanho"], preco: parseFloat((p["Preco"] || p["Preço"] || "0").replace(",", ".")) });
+    });
+    PRATOS = novoPratos;
+  }catch(e){
+    console.warn("Não foi possível carregar a planilha, usando dados de exemplo.", e);
+  }
+}
+
+function lojaAbertaAgora(){
+  const agora = new Date();
+  const minAgora = agora.getHours()*60 + agora.getMinutes();
+  const [hA,mA] = (LOJA.aberturaGeral||"08:00").split(":").map(Number);
+  const [hF,mF] = (LOJA.fechamentoGeral||"15:00").split(":").map(Number);
+  const diaHoje = DIAS_SEMANA[agora.getDay()];
+  const pratoHoje = PRATOS[diaHoje];
+  if(!pratoHoje || !pratoHoje.disponivel) return false;
+  return minAgora >= (hA*60+mA) && minAgora <= (hF*60+mF);
+}
+
+function corteJaPassouHoje(){
+  if(!LOJA.horarioCorte) return false;
+  const agora = new Date();
+  const [hC,mC] = LOJA.horarioCorte.split(":").map(Number);
+  const minAgora = agora.getHours()*60 + agora.getMinutes();
+  return minAgora > (hC*60+mC);
+}
+
+function renderHeader(){
+  document.getElementById("logo").src = LOJA.logo || placeholderImg(LOJA.nome, LOJA.corPrincipal);
+  document.getElementById("nome-loja").textContent = LOJA.nome;
+  document.getElementById("slogan-loja").textContent = LOJA.slogan;
+  if(LOJA.corPrincipal) document.documentElement.style.setProperty('--cor-principal', LOJA.corPrincipal);
+  if(LOJA.corFundo) document.documentElement.style.setProperty('--cor-fundo', LOJA.corFundo);
+
+  const aberta = lojaAbertaAgora();
+  const pill = document.getElementById("status-loja");
+  pill.className = "status-pill " + (aberta ? "aberto" : "fechado");
+  document.getElementById("status-texto").textContent = aberta ? "Aberto agora" : "Fechado no momento";
+
+  const avisoEl = document.getElementById("aviso-corte");
+  const diaHoje = DIAS_SEMANA[new Date().getDay()];
+  if(DIA_SELECIONADO === diaHoje && corteJaPassouHoje() && PRATOS[diaHoje]?.disponivel){
+    avisoEl.classList.remove("oculto");
+    document.getElementById("aviso-corte-texto").textContent = `Pedidos de hoje encerram às ${LOJA.horarioCorte}. Você ainda pode pedir, mas a entrega pode ficar pra amanhã.`;
+  } else if (DIA_SELECIONADO === diaHoje && LOJA.horarioCorte) {
+    avisoEl.classList.remove("oculto");
+    document.getElementById("aviso-corte-texto").textContent = `Peça até ${LOJA.horarioCorte} para receber ainda hoje.`;
+  } else {
+    avisoEl.classList.add("oculto");
+  }
+}
+
+function renderDias(){
+  const hojeIndex = new Date().getDay();
+  const wrap = document.getElementById("lista-dias");
+  wrap.innerHTML = DIAS_SEMANA.map((dia, i) => {
+    const fechado = PRATOS[dia] && !PRATOS[dia].disponivel;
+    return `<div class="dia-chip ${dia===DIA_SELECIONADO?'ativo':''} ${fechado?'fechado-dia':''}" data-dia="${dia}">
+      <span class="nome-dia">${DIAS_LABEL[dia]}</span>
+      ${i===hojeIndex ? '<span class="marca-hoje">Hoje</span>' : ''}
+    </div>`;
+  }).join("");
+
+  wrap.querySelectorAll(".dia-chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      DIA_SELECIONADO = chip.dataset.dia;
+      TAMANHO_SELECIONADO = null;
+      renderDias();
+      renderPrato();
+      renderHeader();
+    });
+  });
+}
+
+function renderPrato(){
+  const cont = document.getElementById("prato-container");
+  const prato = PRATOS[DIA_SELECIONADO];
+
+  if(!prato || !prato.disponivel){
+    cont.innerHTML = `<div class="prato-card"><div class="indisponivel-dia">😴 Sem cardápio disponível para ${DIAS_LABEL[DIA_SELECIONADO]}.<br>Escolha outro dia acima.</div></div>`;
+    return;
+  }
+
+  if(TAMANHO_SELECIONADO === null && prato.tamanhos.length){
+    TAMANHO_SELECIONADO = prato.tamanhos[0].tamanho;
+  }
+  const precoAtual = prato.tamanhos.find(t => t.tamanho === TAMANHO_SELECIONADO)?.preco || 0;
+  const chaveCarrinho = `${DIA_SELECIONADO}|${TAMANHO_SELECIONADO}`;
+  const qtdAtual = CARRINHO[chaveCarrinho]?.qtd || 0;
+
+  cont.innerHTML = `
+    <div class="prato-card">
+      <img src="${prato.foto || placeholderImg(prato.nome, LOJA.corPrincipal)}" alt="${prato.nome}">
+      <div class="prato-corpo">
+        <h2>${prato.nome}</h2>
+        <p class="prato-obs">${prato.observacao}</p>
+
+        <p class="tamanhos-titulo">Escolha o tamanho</p>
+        <div class="tamanhos-grupo">
+          ${prato.tamanhos.map(t => `
+            <div class="tamanho-btn ${t.tamanho===TAMANHO_SELECIONADO?'ativo':''}" data-tam="${t.tamanho}">
+              <span class="letra">${t.tamanho}</span>
+              <span class="preco-tam">${formatarPreco(t.preco)}</span>
+            </div>`).join("")}
+        </div>
+
+        <div class="qtd-linha">
+          <div class="stepper">
+            <button id="btn-menos-prato">−</button>
+            <span class="qtd" id="qtd-prato">${qtdAtual}</span>
+            <button id="btn-mais-prato">+</button>
+          </div>
+          <button class="add-btn-prato" id="btn-add-prato">Adicionar · ${formatarPreco(precoAtual)}</button>
+        </div>
+      </div>
+    </div>`;
+
+  cont.querySelectorAll(".tamanho-btn").forEach(btn => {
+    btn.addEventListener("click", () => { TAMANHO_SELECIONADO = btn.dataset.tam; renderPrato(); });
+  });
+
+  document.getElementById("btn-mais-prato").addEventListener("click", () => alterarQtdPrato(1));
+  document.getElementById("btn-menos-prato").addEventListener("click", () => alterarQtdPrato(-1));
+  document.getElementById("btn-add-prato").addEventListener("click", () => alterarQtdPrato(1));
+}
+
+function alterarQtdPrato(delta){
+  const prato = PRATOS[DIA_SELECIONADO];
+  const tamInfo = prato.tamanhos.find(t => t.tamanho === TAMANHO_SELECIONADO);
+  if(!tamInfo) return;
+  const chave = `${DIA_SELECIONADO}|${TAMANHO_SELECIONADO}`;
+  const atual = CARRINHO[chave]?.qtd || 0;
+  const nova = Math.max(0, atual + delta);
+  if(nova === 0){ delete CARRINHO[chave]; }
+  else{ CARRINHO[chave] = { dia: DIA_SELECIONADO, prato: prato.nome, tamanho: TAMANHO_SELECIONADO, preco: tamInfo.preco, qtd: nova }; }
+  renderPrato();
+  atualizarCarrinho();
+}
+
+function totalCarrinho(){ return Object.values(CARRINHO).reduce((s,i) => s + i.preco * i.qtd, 0); }
+function itensCarrinho(){ return Object.values(CARRINHO).reduce((s,i) => s + i.qtd, 0); }
+
+function atualizarCarrinho(){
+  const barra = document.getElementById("carrinho-barra");
+  const totalItens = itensCarrinho();
+  document.getElementById("carrinho-contador").textContent = totalItens;
+  document.getElementById("carrinho-total").textContent = formatarPreco(totalCarrinho());
+  barra.classList.toggle("visivel", totalItens > 0);
+  renderRecibo();
+}
+
+function renderRecibo(){
+  const cont = document.getElementById("recibo-itens");
+  const chaves = Object.keys(CARRINHO);
+  if(chaves.length === 0){
+    cont.innerHTML = `<div class="vazio">Seu carrinho está vazio</div>`;
+  } else {
+    cont.innerHTML = chaves.map(chave => {
+      const i = CARRINHO[chave];
+      return `
+      <div class="recibo-item">
+        <div class="qtd-nome">
+          ${i.qtd}x Marmita ${i.tamanho} — ${i.prato} (${DIAS_LABEL[i.dia]})<br>
+          <button class="remover" data-remover="${chave}">remover</button>
+        </div>
+        <div>${formatarPreco(i.preco * i.qtd)}</div>
+      </div>`;
+    }).join("");
+    cont.querySelectorAll("[data-remover]").forEach(btn =>
+      btn.addEventListener("click", () => { delete CARRINHO[btn.dataset.remover]; renderPrato(); atualizarCarrinho(); })
+    );
+  }
+
+  const subtotal = totalCarrinho();
+  const taxa = (subtotal > 0 && TIPO_ENTREGA === "entrega") ? (LOJA.taxaEntrega || 0) : 0;
+  document.getElementById("linha-subtotal").textContent = formatarPreco(subtotal);
+  document.getElementById("linha-taxa").textContent = formatarPreco(taxa);
+  document.getElementById("linha-total-geral").textContent = formatarPreco(subtotal + taxa);
+  document.getElementById("linha-taxa-wrap").style.display = TIPO_ENTREGA === "entrega" ? "flex" : "none";
+}
+
+const overlay = document.getElementById("overlay");
+const sheet = document.getElementById("sheet");
+function abrirSheet(){ overlay.classList.add("aberto"); sheet.classList.add("aberto"); }
+function fecharSheet(){ overlay.classList.remove("aberto"); sheet.classList.remove("aberto"); }
+document.getElementById("carrinho-barra").addEventListener("click", abrirSheet);
+document.getElementById("fechar-sheet").addEventListener("click", fecharSheet);
+overlay.addEventListener("click", fecharSheet);
+
+document.querySelectorAll("#grupo-entrega .opcao-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll("#grupo-entrega .opcao-btn").forEach(b => b.classList.remove("ativa"));
+    btn.classList.add("ativa");
+    TIPO_ENTREGA = btn.dataset.entrega;
+    document.getElementById("campo-endereco").classList.toggle("oculto", TIPO_ENTREGA !== "entrega");
+    renderRecibo();
+  });
+});
+document.querySelectorAll("#grupo-pagamento .opcao-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll("#grupo-pagamento .opcao-btn").forEach(b => b.classList.remove("ativa"));
+    btn.classList.add("ativa");
+    FORMA_PAGAMENTO = btn.dataset.pagamento;
+    document.getElementById("campo-troco").classList.toggle("oculto", FORMA_PAGAMENTO !== "Dinheiro");
+  });
+});
+document.getElementById("campo-troco").classList.add("oculto");
+
+document.getElementById("btn-whatsapp").addEventListener("click", () => {
+  const chaves = Object.keys(CARRINHO);
+  if(chaves.length === 0) return;
+
+  const nome = document.getElementById("input-nome").value.trim();
+  if(nome === ""){ document.getElementById("input-nome").focus(); return; }
+
+  const endereco = document.getElementById("input-endereco").value.trim();
+  if(TIPO_ENTREGA === "entrega" && endereco === ""){ document.getElementById("input-endereco").focus(); return; }
+
+  const subtotal = totalCarrinho();
+  const taxa = TIPO_ENTREGA === "entrega" ? (LOJA.taxaEntrega || 0) : 0;
+  const total = subtotal + taxa;
+  const troco = document.getElementById("input-troco").value.trim();
+
+  let msg = `Você tem um novo pedido de *${nome}*!\n\n`;
+  chaves.forEach(chave => {
+    const i = CARRINHO[chave];
+    msg += `${i.qtd}x Marmita ${i.tamanho} — ${i.prato} (${DIAS_LABEL[i.dia]}) - ${formatarPreco(i.preco * i.qtd)}\n`;
+  });
+  msg += `\nSubtotal: ${formatarPreco(subtotal)}`;
+  if(TIPO_ENTREGA === "entrega") msg += `\nTaxa de entrega: ${formatarPreco(taxa)}`;
+  msg += `\n*Total: ${formatarPreco(total)}*`;
+  msg += `\n\n*Tipo:* ${TIPO_ENTREGA === "entrega" ? "Entrega" : "Retirada no local"}`;
+  if(TIPO_ENTREGA === "entrega") msg += `\n*Endereço de entrega:* ${endereco}`;
+  msg += `\n*Pagamento:* ${FORMA_PAGAMENTO}`;
+  if(FORMA_PAGAMENTO === "Dinheiro" && troco !== "") msg += ` (troco para ${troco})`;
+  msg += `\n\n${LOJA.rodape || ""}`;
+
+  const numero = (LOJA.whatsapp || "").replace(/\D/g,"");
+  const url = `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`;
+  window.open(url, "_blank");
+});
+
+(async function init(){
+  await carregarDados();
+  renderHeader();
+  renderDias();
+  renderPrato();
+  atualizarCarrinho();
+})();
+</script>
+</body>
+</html>
